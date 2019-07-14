@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+  controller:
+    build:
+      context: .
+    working_dir: /opt/imaging-service/services/controller
+    command: nodemon app.js
+    volumes:
+      - type: bind
+        source: ./services
+        target: /opt/imaging-service/services
+    environment:
+      - CONTROLLER_SERVICE_PORT=8001
+    ports:
+      - '8001:8001'
+
+  access:
+    build:
+      context: .
+    working_dir: /opt/imaging-service/services/access
+    command: nodemon app.js
+    volumes:
+      - type: bind
+        source: ./services
+        target: /opt/imaging-service/services
+    environment:
+      - ACCESS_SERVICE_PORT=8002
+    ports:
+      - '8002:8002'
+
+  uploader:
+    build:
+      context: .
+    working_dir: /opt/imaging-service/services/uploader
+    command: nodemon app.js
+    volumes:
+      - type: bind
+        source: ./services
+        target: /opt/imaging-service/services
+    environment:
+      - UPLOADER_SERVICE_PORT=8003
+      - ACCESS_SERVICE_HOST=access
+      - ACCESS_SERVICE_PORT=8002
+    ports:
+      - '8003:8003'
