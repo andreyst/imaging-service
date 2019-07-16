@@ -8,4 +8,4 @@ RUN /tmp/setup_node_10.x \
       less \
     && npm install -g nodemon
 
-ADD services /opt/imaging-service/services/
+ADD services /opt/shop-services/services/

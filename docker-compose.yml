@@ -1,46 +1,65 @@
 version: "3.7"
 
 services:
-  controller:
+  order:
     build:
       context: .
-    working_dir: /opt/imaging-service/services/controller
+    working_dir: /opt/shop-services/services/order
     command: nodemon app.js
     volumes:
       - type: bind
         source: ./services
-        target: /opt/imaging-service/services
+        target: /opt/shop-services/services
     environment:
-      - CONTROLLER_SERVICE_PORT=8001
+      - ORDER_SERVICE_PORT=8001
+      - ACCESS_SERVICE_HOST=access
+      - ACCESS_SERVICE_PORT=8002
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6832
     ports:
       - '8001:8001'
 
   access:
     build:
       context: .
-    working_dir: /opt/imaging-service/services/access
+    working_dir: /opt/shop-services/services/access
     command: nodemon app.js
     volumes:
       - type: bind
         source: ./services
-        target: /opt/imaging-service/services
+        target: /opt/shop-services/services
     environment:
       - ACCESS_SERVICE_PORT=8002
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6832
     ports:
       - '8002:8002'
 
-  uploader:
+  inventory:
     build:
       context: .
-    working_dir: /opt/imaging-service/services/uploader
+    working_dir: /opt/shop-services/services/inventory
     command: nodemon app.js
     volumes:
       - type: bind
         source: ./services
-        target: /opt/imaging-service/services
+        target: /opt/shop-services/services
     environment:
-      - UPLOADER_SERVICE_PORT=8003
-      - ACCESS_SERVICE_HOST=access
-      - ACCESS_SERVICE_PORT=8002
+      - INVENTORY_SERVICE_PORT=8003
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6832
     ports:
       - '8003:8003'
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.8
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - '5775:5775/udp'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '16686:16686'
+      - '14268:14268'
+      - '9411:9411'
