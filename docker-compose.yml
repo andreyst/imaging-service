@@ -14,8 +14,19 @@ services:
       - ORDER_SERVICE_PORT=8001
       - ACCESS_SERVICE_HOST=access
       - ACCESS_SERVICE_PORT=8002
+      - INVENTORY_SERVICE_HOST=inventory
+      - INVENTORY_SERVICE_PORT=8003
+      - PAYMENT_SERVICE_HOST=payment
+      - PAYMENT_SERVICE_PORT=8004
+      - SHIPPING_SERVICE_HOST=shipping
+      - SHIPPING_SERVICE_PORT=8005
       - JAEGER_HOST=jaeger
       - JAEGER_PORT=6832
+      - DD_AGENT_HOST=ddagent
+      - DD_AGENT_TRACING_PORT=8126
+      - DD_API_KEY
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
     ports:
       - '8001:8001'
 
@@ -32,6 +43,11 @@ services:
       - ACCESS_SERVICE_PORT=8002
       - JAEGER_HOST=jaeger
       - JAEGER_PORT=6832
+      - DD_AGENT_HOST=ddagent
+      - DD_AGENT_TRACING_PORT=8126
+      - DD_API_KEY
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
     ports:
       - '8002:8002'
 
@@ -46,10 +62,63 @@ services:
         target: /opt/shop-services/services
     environment:
       - INVENTORY_SERVICE_PORT=8003
+      - ACCESS_SERVICE_HOST=access
+      - ACCESS_SERVICE_PORT=8002
       - JAEGER_HOST=jaeger
       - JAEGER_PORT=6832
+      - DD_AGENT_HOST=ddagent
+      - DD_AGENT_TRACING_PORT=8126
+      - DD_API_KEY
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
     ports:
       - '8003:8003'
+
+  payment:
+    build:
+      context: .
+    working_dir: /opt/shop-services/services/payment
+    command: nodemon app.js
+    volumes:
+      - type: bind
+        source: ./services
+        target: /opt/shop-services/services
+    environment:
+      - PAYMENT_SERVICE_PORT=8004
+      - ACCESS_SERVICE_HOST=access
+      - ACCESS_SERVICE_PORT=8002
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6832
+      - DD_AGENT_HOST=ddagent
+      - DD_AGENT_TRACING_PORT=8126
+      - DD_API_KEY
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+    ports:
+      - '8004:8004'
+
+  shipping:
+    build:
+      context: .
+    working_dir: /opt/shop-services/services/shipping
+    command: nodemon app.js
+    volumes:
+      - type: bind
+        source: ./services
+        target: /opt/shop-services/services
+    environment:
+      - SHIPPING_SERVICE_PORT=8005
+      - ACCESS_SERVICE_HOST=access
+      - ACCESS_SERVICE_PORT=8002
+      - JAEGER_HOST=jaeger
+      - JAEGER_PORT=6832
+      - DD_AGENT_HOST=ddagent
+      - DD_AGENT_TRACING_PORT=8126
+      - DD_API_KEY
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+    ports:
+      - '8005:8005'
 
   jaeger:
     image: jaegertracing/all-in-one:1.8
@@ -63,3 +132,68 @@ services:
       - '16686:16686'
       - '14268:14268'
       - '9411:9411'
+
+  ddagent:
+    image: datadog/docker-dd-agent
+    environment:
+      - DD_API_KEY
+      - DD_APM_ENABLED=true
+    ports:
+      - '8125:8125/tcp'
+      - '8126:8126/tcp'
+
+  redis:
+    image: redis
+    ports:
+      - '6379:6379/tcp'
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+    ports:
+      - '5432:5432/tcp'
+
+  sentry:
+    image: sentry
+    environment:
+      - SENTRY_SECRET_KEY
+      - SENTRY_POSTGRES_HOST=postgres
+      - SENTRY_POSTGRES_PORT=5432
+      - SENTRY_DB_NAME=sentry
+      - SENTRY_DB_USER
+      - SENTRY_DB_PASSWORD
+      - SENTRY_REDIS_HOST=redis
+      - SENTRY_REDIS_PORT=6379
+      - SENTRY_REDIS_DB=0
+    ports:
+      - '8089:9000'
+
+  sentrycron:
+    image: sentry
+    command: sentry run cron
+    environment:
+      - SENTRY_SECRET_KEY
+      - SENTRY_POSTGRES_HOST=postgres
+      - SENTRY_POSTGRES_PORT=5432
+      - SENTRY_DB_NAME=sentry
+      - SENTRY_DB_USER
+      - SENTRY_DB_PASSWORD
+      - SENTRY_REDIS_HOST=redis
+      - SENTRY_REDIS_PORT=6379
+      - SENTRY_REDIS_DB=0
+
+  sentryworker:
+    image: sentry
+    command: sentry run worker
+    environment:
+      - SENTRY_SECRET_KEY
+      - SENTRY_POSTGRES_HOST=postgres
+      - SENTRY_POSTGRES_PORT=5432
+      - SENTRY_DB_NAME=sentry
+      - SENTRY_DB_USER
+      - SENTRY_DB_PASSWORD
+      - SENTRY_REDIS_HOST=redis
+      - SENTRY_REDIS_PORT=6379
+      - SENTRY_REDIS_DB=0

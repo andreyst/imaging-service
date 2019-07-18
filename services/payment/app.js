@@ -1,4 +1,4 @@
-const serviceShortName = 'Access'
+const serviceShortName = 'Payment'
 const serviceName = serviceShortName + 'Service'
 
 const ddTracer = require('dd-trace').init({
@@ -10,9 +10,12 @@ const ddTracer = require('dd-trace').init({
 })
 
 const app = require('express')()
+const request = require('request')
+const uuid = require('uuid')
 const winston = require('winston')
 const DatadogTransport = require('@shelf/winston-datadog-logs-transport');
 const opentracing = require('opentracing')
+const axios = require('axios');
 
 const logger = winston.createLogger({
   level: 'debug',
@@ -74,50 +77,65 @@ var options = {
 // var tracer = initTracer(config, options);
 const tracer = ddTracer
 
-const host = process.env['ACCESS_SERVICE_HOST'] || '0.0.0.0'
-const port = process.env['ACCESS_SERVICE_PORT'] || 8002
+const host = process.env['PAYMENT_SERVICE_HOST'] || '0.0.0.0'
+const port = process.env['PAYMENT_SERVICE_PORT'] || 8004
 
 app.listen(port, host, () => logger.info(`${serviceShortName} service listening on ${host}:${port}!`))
+
+function get_access_service_endpoint() {
+  return 'http://' + process.env['ACCESS_SERVICE_HOST'] + ':' + process.env['ACCESS_SERVICE_PORT']
+}
+
+async function authorize(span, headers) {
+  const url = get_access_service_endpoint() + '/authorize'
+  const response = await axios.get(url, { headers });
+  const data = response.data;
+
+  logger.info('Authorization request', response.data.success, 'authorized', response.data.authorized);
+  span.log({'event': 'authorized'});
+}
+
+async function authenticate(span, headers) {
+  const url = get_access_service_endpoint() + '/authenticate'
+  const response = await axios.get(url, { headers });
+  const data = response.data;
+
+  span.log({'event': 'authenticated'});
+  logger.info('Authentication request', response.data.success, 'authenticated', response.data.authenticated);
+}
 
 app.get('/', (req, res) => {
   return res.send({serviceName})
 })
 
-app.get('/authenticate', async (req, res) => {
-  logger.info('Received an authenticate request')
-
+app.get('/pay', async (req, res) => {
   const parentSpanContext = tracer.extract(opentracing.FORMAT_HTTP_HEADERS, req.headers)
-  const span = tracer.startSpan('authenticate', {
+  const span = tracer.startSpan('pay', {
     childOf: parentSpanContext
   })
 
-  await new Promise(done => setTimeout(done, Math.floor(Math.random() * 250)));
+  const headers = {}
+  tracer.inject(span, opentracing.FORMAT_HTTP_HEADERS, headers)
 
-  span.log({'event': 'authenticated'})
-  span.finish()
+  try {
+    await authenticate(span, headers)
+    await authorize(span, headers)
+  } catch (err) {
+    span.setTag(opentracing.Tags.ERROR, true);
+    logger.error(err.stack)
+    span.log({'event': 'error', 'error.object': err, 'message': err.message, 'stack': err.stack});
+    span.finish();
 
-  if (Math.random() < 0.1) {
-    return res.status(500).send('HTTP 500 Server Error')
+    return res.send({ success: false, traceId: span.context().traceIdStr });
   }
-
-  return res.send({ success: true, authenticated: true })
-})
-
-app.get('/authorize', async (req, res) => {
-  logger.info('Received an authorize request')
-
-  const parentSpanContext = tracer.extract(opentracing.FORMAT_HTTP_HEADERS, req.headers)
-  const span = tracer.startSpan('authorize', {
-    childOf: parentSpanContext
-  })
 
   await new Promise(done => setTimeout(done, Math.floor(Math.random() * 100)));
 
-  span.log({'event': 'authorized'})
+  logger.info('Paid in trace', span.context().traceIdStr, 'span', span.context().spanIdStr)
+
+  res.send({ success: true, trace_id: span.context().traceIdStr })
+  span.log({'event': 'paid'});
+
   span.finish()
-
-  return res.send({ success: true, authorized: true })
 })
-
-
 
