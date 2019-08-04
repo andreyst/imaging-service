@@ -61,3 +61,5 @@ typings/
 .next
 
 google_cloud_key.json
+
+.spl

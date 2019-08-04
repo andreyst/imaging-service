@@ -71,8 +71,8 @@ var options = {
   logger: logger,
 };
 
-// var tracer = initTracer(config, options);
-const tracer = ddTracer
+var tracer = initTracer(config, options);
+// const tracer = ddTracer
 
 const host = process.env['ACCESS_SERVICE_HOST'] || '0.0.0.0'
 const port = process.env['ACCESS_SERVICE_PORT'] || 8002

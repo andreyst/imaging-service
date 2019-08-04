@@ -3,15 +3,20 @@
     "@google-cloud/error-reporting": "^1.1.1",
     "@google-cloud/logging": "^5.2.0",
     "@google-cloud/logging-winston": "^1.1.1",
+    "@google-cloud/trace-agent": "^4.1.0",
+    "@sentry/node": "^5.1.0",
     "@shelf/winston-datadog-logs-transport": "^1.0.7",
+    "aws-xray-sdk": "^2.3.4",
     "axios": "^0.19.0",
     "dd-trace": "^0.13.1",
     "express": "^4.17.1",
     "jaeger-client": "^3.15.0",
     "opentracing": "^0.14.4",
     "request": "^2.88.0",
+    "splunk-sdk": "^1.9.0",
     "winston": "^3.2.1",
     "winston-cloudwatch": "^2.0.5",
+    "winston-splunk-httplogger": "^2.1.1",
     "winston-syslog": "^2.1.0"
   }
 }

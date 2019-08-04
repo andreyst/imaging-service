@@ -1,6 +1,9 @@
 const serviceShortName = 'Order'
 const serviceName = serviceShortName + 'Service'
 
+const Sentry = require('@sentry/node');
+Sentry.init({ dsn: process.env.SENTRY_DSN });
+
 const ddTracer = require('dd-trace').init({
   enabled: true,
   service: serviceName,
@@ -10,16 +13,21 @@ const ddTracer = require('dd-trace').init({
   logInjection: true,
 })
 
+var AWSXRay = require('aws-xray-sdk');
+AWSXRay.setDaemonAddress(process.env.AWS_XRAY_DAEMON_HOST + ':' + process.env.AWS_XRAY_DAEMON_PORT);
+
 const app = require('express')()
 const request = require('request')
 const uuid = require('uuid')
 const winston = require('winston')
 const WinstonCloudWatch = require('winston-cloudwatch');
+const SplunkStreamEvent = require('winston-splunk-httplogger');
 const {LoggingWinston} = require('@google-cloud/logging-winston');
 const {ErrorReporting} = require('@google-cloud/error-reporting');
 const DatadogTransport = require('@shelf/winston-datadog-logs-transport');
 const opentracing = require('opentracing')
 const axios = require('axios');
+
 
 const logger = winston.createLogger({
   level: 'debug',
@@ -69,6 +77,13 @@ if (process.env.NODE_ENV !== 'production') {
   logger.add(new LoggingWinston({
     keyFilename: __dirname + '/../../google_cloud_key.json'
   }))
+  logger.add(new SplunkStreamEvent({ splunk: {
+      token: process.env.SPLUNK_TOKEN,
+      host: process.env.SPLUNK_HOST || 'localhost',
+      port: process.env.SPLUNK_PORT,
+      protocol: 'http',
+    }
+  }))
 }
 
 const gcloud_errors = new ErrorReporting({
@@ -102,8 +117,27 @@ var options = {
   logger: logger,
 };
 
-// var tracer = initTracer(config, options);
-const tracer = ddTracer
+// Jaeger tracer
+var tracer = initTracer(config, options);
+
+// Datadog tracer
+// const tracer = ddTracer
+
+// Google tracer
+// const tracer = require('@google-cloud/trace-agent').start({
+//   keyFilename: __dirname + '/../../google_cloud_key.json',
+//   projectId: 'logs-247119',
+// });
+
+
+// Sentry
+// The request handler must be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler());
+// The error handler must be before any other error middleware
+app.use(Sentry.Handlers.errorHandler());
+
+// AWS X-Ray
+app.use(AWSXRay.express.openSegment('MyApp'));
 
 const host = process.env['ORDER_SERVICE_HOST'] || '0.0.0.0'
 const port = process.env['ORDER_SERVICE_PORT'] || 8001
@@ -171,6 +205,7 @@ app.get('/order', async (req, res) => {
   })
 
   let orderId = uuid.v4()
+  let userId = Math.floor(Math.random() * Math.floor(10));
 
   const headers = {}
   tracer.inject(span, opentracing.FORMAT_HTTP_HEADERS, headers)
@@ -186,6 +221,12 @@ app.get('/order', async (req, res) => {
   } catch (err) {
     span.setTag(opentracing.Tags.ERROR, true);
     logger.error({message: err.stack})
+
+    Sentry.configureScope((scope) => {
+      scope.setUser({"id": userId});
+      Sentry.captureMessage(err.message)
+    });
+
     span.log({'event': 'error', 'error.object': err, 'message': err.message, 'stack': err.stack});
     span.finish();
     gcloud_errors.report({'event': 'error', 'error.object': err, 'message': err.message, 'stack': err.stack});
@@ -194,7 +235,7 @@ app.get('/order', async (req, res) => {
   }
 
   const elapsedTime = new Date().getTime() - startTime
-  logger.info({message: 'Made order ' + orderId + ' in trace ' + span.context().traceIdStr + ' span ' + span.context().spanIdStr, orderId: orderId, elapsedTime})
+  logger.info({message: 'Made order ' + orderId + ' in trace ' + span.context().traceIdStr + ' span ' + span.context().spanIdStr, orderId, elapsedTime, userId})
 
   res.send({ success: true, orderId, traceId: span.context().toTraceId() })
   span.log({'event': 'order_made'});
@@ -202,3 +243,4 @@ app.get('/order', async (req, res) => {
   span.finish()
 })
 
+app.use(AWSXRay.express.closeSegment());
