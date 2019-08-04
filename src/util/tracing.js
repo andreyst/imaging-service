@@ -8,7 +8,7 @@ var ddTracer, jaegerTracer;
 function initDdTracer() {
   ddTracer = ddTrace.init({
     enabled: true,
-    service: process.env.SERVICE_NAME + 'Service',
+    service: process.env.SERVICE_NAME,
     hostname: process.env.DD_AGENT_TRACE_HOST,
     port: process.env.DD_AGENT_TRACE_PORT,
     analytics: true,
@@ -99,19 +99,22 @@ class Span {
   }
 }
 
-module.exports.startSpan = function(name, headers) {
-  const ddParentSpanContext = ddTracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers)
+module.exports.startSpan = function(name, headersIn) {
+  const headersOut = {}
+
+  const ddParentSpanContext = ddTracer.extract(opentracing.FORMAT_HTTP_HEADERS, headersIn)
   const ddSpan = ddTracer.startSpan(name, {
     childOf: ddParentSpanContext
   })
 
-  const jaegerParentSpanContext = jaegerTracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers)
+  const jaegerParentSpanContext = jaegerTracer.extract(opentracing.FORMAT_HTTP_HEADERS, headersIn)
   const jaegerSpan = jaegerTracer.startSpan(name, {
     childOf: jaegerParentSpanContext
   })
 
   const span = new Span(ddSpan, jaegerSpan)
+  span.injectHeaders(headersOut)
 
-  return span
+  return {span, headersOut}
 }
 

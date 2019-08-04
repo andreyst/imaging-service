@@ -18,34 +18,28 @@ const uuid = require('uuid')
 
 app.get('/order', async (req, res) => {
   const startTime = new Date().getTime()
-
-  const span = tracing.startSpan('order', req.headers)
+  const {span, headersOut} = tracing.startSpan(process.env.SERVICE_NAME, req.headers)
 
   let orderId = uuid.v4()
   let userId = Math.floor(Math.random() * Math.floor(10));
 
-  const headers = {}
-  span.injectHeaders(headers)
-  console.log(headers)
-
   try {
-    await accessClient.authenticate(span, headers, orderId)
-    await accessClient.authorize(span, headers, orderId)
-    await paymentClient.pay(span, headers, orderId)
+    await accessClient.authenticate(span, headersOut, orderId)
+    await accessClient.authorize(span, headersOut, orderId)
+    await paymentClient.pay(span, headersOut, orderId)
     await Promise.all([
-      inventoryClient.reserve(span, headers, orderId),
-      shippingClient.ship(span, headers, orderId)
+      inventoryClient.reserve(span, headersOut, orderId),
+      shippingClient.ship(span, headersOut, orderId)
     ]);
   } catch (err) {
     return expressUtil.handleClientError(span, err, res)
   }
 
   const elapsedTime = new Date().getTime() - startTime
-  logger.info({message: 'Made order', orderId, elapsedTime, userId, traceIds: span.getTraceIds()})
+  logger.info({ message: 'Made order', orderId, userId, elapsedTime, traceIds: span.getTraceIds() })
 
   res.send({ success: true, ordered: true, orderId, traceIds: span.getTraceIds() })
   span.log({'event': 'order_made'});
-
   span.finish()
 })
 

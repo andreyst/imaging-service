@@ -64,6 +64,10 @@ services:
       - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
+      - SENTRY_DSN
+      - SPLUNK_HOST=splunk
+      - SPLUNK_PORT=8088
+      - SPLUNK_TOKEN
     ports:
       - '8002:8002'
 
@@ -93,6 +97,10 @@ services:
       - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
+      - SENTRY_DSN
+      - SPLUNK_HOST=splunk
+      - SPLUNK_PORT=8088
+      - SPLUNK_TOKEN
     ports:
       - '8003:8003'
 
@@ -122,6 +130,10 @@ services:
       - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
+      - SENTRY_DSN
+      - SPLUNK_HOST=splunk
+      - SPLUNK_PORT=8088
+      - SPLUNK_TOKEN
     ports:
       - '8004:8004'
 
@@ -151,6 +163,10 @@ services:
       - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
+      - SENTRY_DSN
+      - SPLUNK_HOST=splunk
+      - SPLUNK_PORT=8088
+      - SPLUNK_TOKEN
     ports:
       - '8005:8005'
 

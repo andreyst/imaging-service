@@ -1,2 +1,5 @@
  ☐ Make services ignore sending log errors
  ☐ Add module for error reporting
+ ☐ Add handling of missing values for all env vars
+ ☐ Check why DD logs does not contain trace
+ ☐ Check why error in order service does not generate error trace in DD

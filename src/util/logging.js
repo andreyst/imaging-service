@@ -46,7 +46,7 @@ module.exports.init = function() {
 
   logger.add(new WinstonCloudWatch({
     logGroupName: process.env.AWS_LOG_GROUP_NAME,
-    logStreamName: process.env.AWS_LOG_STREAM_NAME,
+    logStreamName: process.env.SERVICE_NAME + 'Service',
     awsRegion: process.env.AWS_REGION,
     awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
     awsSecretKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -65,10 +65,8 @@ module.exports.init = function() {
     }
   }))
 
-  module.exports.logger = logger
-
   tracing.initWithLogger(logger)
 
-  console.log(logger)
+  module.exports.logger = logger
   return logger
 }
