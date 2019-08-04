@@ -126,14 +126,14 @@ app.get('/pay', async (req, res) => {
     span.log({'event': 'error', 'error.object': err, 'message': err.message, 'stack': err.stack});
     span.finish();
 
-    return res.send({ success: false, traceId: span.context().traceIdStr });
+    return res.send({ success: false, paid: false, traceId: span.context().traceIdStr });
   }
 
   await new Promise(done => setTimeout(done, Math.floor(Math.random() * 100)));
 
   logger.info('Paid in trace', span.context().traceIdStr, 'span', span.context().spanIdStr)
 
-  res.send({ success: true, trace_id: span.context().traceIdStr })
+  res.send({ success: true, paid: true, trace_id: span.context().traceIdStr })
   span.log({'event': 'paid'});
 
   span.finish()

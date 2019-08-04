@@ -15,5 +15,5 @@ RUN /tmp/setup_node_10.x \
       telnet \
     && npm install -g nodemon
 
-ADD services /opt/shop-services/services/
+ADD src /opt/shop-services/src
 ADD google_cloud_key.json /opt/shop-services/google_cloud_key.json

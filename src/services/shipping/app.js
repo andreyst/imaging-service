@@ -126,14 +126,14 @@ app.get('/ship', async (req, res) => {
     span.log({'event': 'error', 'error.object': err, 'message': err.message, 'stack': err.stack});
     span.finish();
 
-    return res.send({ success: false, traceId: span.context().traceIdStr });
+    return res.send({ success: false, shipped: false, traceId: span.context().traceIdStr });
   }
 
   await new Promise(done => setTimeout(done, Math.floor(Math.random() * 100)));
 
   logger.info('Shipped in trace', span.context().traceIdStr, 'span', span.context().spanIdStr)
 
-  res.send({ success: true, trace_id: span.context().traceIdStr })
+  res.send({ success: true, shipped: true, trace_id: span.context().traceIdStr })
   span.log({'event': 'shipped'});
 
   span.finish()

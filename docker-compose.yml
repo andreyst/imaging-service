@@ -4,13 +4,14 @@ services:
   order:
     build:
       context: .
-    working_dir: /opt/shop-services/services/order
-    command: nodemon app.js
+    working_dir: /opt/shop-services/src/services/order
+    command: nodemon --watch . --watch ../../util app.js
     volumes:
       - type: bind
-        source: ./services
-        target: /opt/shop-services/services
+        source: ./src
+        target: /opt/shop-services/src
     environment:
+      - SERVICE_NAME=order
       - ORDER_SERVICE_PORT=8001
       - ACCESS_SERVICE_HOST=access
       - ACCESS_SERVICE_PORT=8002
@@ -27,6 +28,9 @@ services:
       - DD_API_KEY
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+      - AWS_LOG_GROUP_NAME
+      - AWS_LOG_STREAM_NAME
+      - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
       - SENTRY_DSN
@@ -39,13 +43,14 @@ services:
   access:
     build:
       context: .
-    working_dir: /opt/shop-services/services/access
-    command: nodemon app.js
+    working_dir: /opt/shop-services/src/services/access
+    command: nodemon --watch . --watch ../../util app.js
     volumes:
       - type: bind
-        source: ./services
-        target: /opt/shop-services/services
+        source: ./src
+        target: /opt/shop-services/src
     environment:
+      - SERVICE_NAME=access
       - ACCESS_SERVICE_PORT=8002
       - JAEGER_HOST=jaeger
       - JAEGER_PORT=6832
@@ -54,6 +59,9 @@ services:
       - DD_API_KEY
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+      - AWS_LOG_GROUP_NAME
+      - AWS_LOG_STREAM_NAME
+      - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
     ports:
@@ -62,13 +70,14 @@ services:
   inventory:
     build:
       context: .
-    working_dir: /opt/shop-services/services/inventory
-    command: nodemon app.js
+    working_dir: /opt/shop-services/src/services/inventory
+    command: nodemon --watch . --watch ../../util app.js
     volumes:
       - type: bind
-        source: ./services
-        target: /opt/shop-services/services
+        source: ./src
+        target: /opt/shop-services/src
     environment:
+      - SERVICE_NAME=inventory
       - INVENTORY_SERVICE_PORT=8003
       - ACCESS_SERVICE_HOST=access
       - ACCESS_SERVICE_PORT=8002
@@ -79,6 +88,9 @@ services:
       - DD_API_KEY
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+      - AWS_LOG_GROUP_NAME
+      - AWS_LOG_STREAM_NAME
+      - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
     ports:
@@ -87,13 +99,14 @@ services:
   payment:
     build:
       context: .
-    working_dir: /opt/shop-services/services/payment
-    command: nodemon app.js
+    working_dir: /opt/shop-services/src/services/payment
+    command: nodemon --watch . --watch ../../util app.js
     volumes:
       - type: bind
-        source: ./services
-        target: /opt/shop-services/services
+        source: ./src
+        target: /opt/shop-services/src
     environment:
+      - SERVICE_NAME=payment
       - PAYMENT_SERVICE_PORT=8004
       - ACCESS_SERVICE_HOST=access
       - ACCESS_SERVICE_PORT=8002
@@ -104,6 +117,9 @@ services:
       - DD_API_KEY
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+      - AWS_LOG_GROUP_NAME
+      - AWS_LOG_STREAM_NAME
+      - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
     ports:
@@ -112,13 +128,14 @@ services:
   shipping:
     build:
       context: .
-    working_dir: /opt/shop-services/services/shipping
-    command: nodemon app.js
+    working_dir: /opt/shop-services/src/services/shipping
+    command: nodemon --watch . --watch ../../util app.js
     volumes:
       - type: bind
-        source: ./services
-        target: /opt/shop-services/services
+        source: ./src
+        target: /opt/shop-services/src
     environment:
+      - SERVICE_NAME=shipping
       - SHIPPING_SERVICE_PORT=8005
       - ACCESS_SERVICE_HOST=access
       - ACCESS_SERVICE_PORT=8002
@@ -129,6 +146,9 @@ services:
       - DD_API_KEY
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
+      - AWS_LOG_GROUP_NAME
+      - AWS_LOG_STREAM_NAME
+      - AWS_REGION
       - AWS_XRAY_DAEMON_HOST=awsxraydaemon
       - AWS_XRAY_DAEMON_PORT=2000
     ports:

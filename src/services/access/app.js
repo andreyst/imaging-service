@@ -103,6 +103,7 @@ app.get('/authenticate', async (req, res) => {
   return res.send({ success: true, authenticated: true })
 })
 
+// TODO: Allow authentication in authorize request
 app.get('/authorize', async (req, res) => {
   logger.info('Received an authorize request')
 
